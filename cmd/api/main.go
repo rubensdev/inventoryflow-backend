@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -13,9 +15,19 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	addr, found := os.LookupEnv("LISTEN_ADDR")
+	if !found {
+		addr = ":8080"
+	}
+
 	router := httprouter.New()
 	router.GET("/", Index)
 
-	log.Println("Server listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Printf("Server listening on %s", addr)
+	log.Fatal(http.ListenAndServe(addr, router))
 }
