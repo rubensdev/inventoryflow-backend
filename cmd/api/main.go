@@ -1,18 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/julienschmidt/httprouter"
+	"github.com/rubensdev/inventoryflow-backend/internal/healthcheck"
 )
-
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	fmt.Fprint(w, "Hello World!\n")
-}
 
 func main() {
 	err := godotenv.Load()
@@ -25,8 +21,15 @@ func main() {
 		addr = ":8080"
 	}
 
+	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime)
+
+	healthCheckHandler := healthcheck.NewHealthCheckHandler(logger, healthcheck.SystemInfo{
+		Env:     os.Getenv("ENV"),
+		Version: os.Getenv("VERSION"),
+	})
+
 	router := httprouter.New()
-	router.GET("/", Index)
+	router.HandlerFunc(http.MethodGet, "/v1/healthcheck", healthCheckHandler.StatusHandler)
 
 	log.Printf("Server listening on %s", addr)
 	log.Fatal(http.ListenAndServe(addr, router))
