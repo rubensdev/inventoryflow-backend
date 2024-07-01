@@ -36,8 +36,20 @@ func (j JSONResponse) MethodNotAllowedResponse(w http.ResponseWriter, r *http.Re
 	j.ErrorResponse(w, r, http.StatusMethodNotAllowed, message)
 }
 
+func (j JSONResponse) EditConflictResponse(w http.ResponseWriter, r *http.Request) {
+	message := "unable to update the record due to an edit conflict, please try again"
+	j.ErrorResponse(w, r, http.StatusConflict, message)
+}
+
 func (j JSONResponse) ErrorResponse(w http.ResponseWriter, r *http.Request, status int, message any) {
-	data := H{"error": message}
+	var data H
+
+	switch v := message.(type) {
+	case error:
+		data = H{"error": v.Error()}
+	default:
+		data = H{"error": v}
+	}
 
 	err := WriteJSON(w, status, data, nil)
 	if err != nil {
